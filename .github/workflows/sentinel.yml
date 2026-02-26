@@ -1,0 +1,17 @@
+
+name: Sentinel Arsenal
+on: [push]
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Security Scan
+        env:
+          SENTINEL_SECRET: ${{ secrets.SENTINEL_SECRET }}
+          SENTINEL_URL: ${{ secrets.SENTINEL_URL }}
+          SENTINEL_TARGET: ${{ secrets.SENTINEL_TARGET }}
+        run: |
+          PAYLOAD='{"repo_name": "RBS3/HRsystem-demo-", "origin": "scanner", "total_vulnerabilities": 1, "target_url": "'$SENTINEL_TARGET'"}'
+          SIG=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$SENTINEL_SECRET" | sed 's/.* //')
+          curl -X POST "$SENTINEL_URL" -H "X-Sentinel-Signature: $SIG" -H "Content-Type: application/json" -d "$PAYLOAD"
